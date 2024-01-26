@@ -29,7 +29,7 @@ import java.util.Optional;
 import java.util.regex.Pattern;
 
 @RestController
-@RequestMapping("/api/v1/files")
+@RequestMapping("/api_files/v1/files")
 public class FilesController extends BaseController {
     @Autowired
     private FilesService filesService;

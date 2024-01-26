@@ -12,5 +12,5 @@ mvn -DskipTests clean package
 FROM openjdk:11-jdk-slim
 ARG JAR_FILE=/app/target/*.jar
 COPY --from=build /app/target/*.jar app.jar
-EXPOSE 8080
+EXPOSE 8081
 ENTRYPOINT ["java","-jar","app.jar"]
