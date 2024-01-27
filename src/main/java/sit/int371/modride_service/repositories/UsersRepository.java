@@ -20,7 +20,7 @@ public interface UsersRepository {
         public List<UsersBean> getAllUsers() throws Exception;
 
         @Select({
-                " select u.user_id,r.role_id,r.role_name,u.email,u.fullname,COALESCE(u.tel, '') AS tel,u.other_contact,u.contact_info,u.profile_img_path, ",
+                " select u.user_id,r.role_id,r.role_name,u.email,u.fullname,COALESCE(u.tel, '') AS tel,u.other_contact,u.contact_info, ",
                 " f.faculty_name,b.branch_name from users u  ",
                 " inner join branches b on u.branch_id = b.branch_id ",
                 " inner join faculties f on b.faculty_id = f.faculty_id ",
@@ -31,7 +31,7 @@ public interface UsersRepository {
 
         // getUserByEmail (เป็นการให้ login เพื่อเข้าใช้แบบ mockup เฉยๆ)
         @Select({
-                        " select u.user_id,r.role_id,r.role_name,u.email,u.fullname,COALESCE(u.tel, '') AS tel,u.profile_img_path,  ",
+                        " select u.user_id,r.role_id,r.role_name,u.email,u.fullname,COALESCE(u.tel, '') AS tel,  ",
                         " f.faculty_name,b.branch_name from users u  ",
                         " inner join branches b on u.branch_id = b.branch_id ",
                         " inner join faculties f on b.faculty_id = f.faculty_id ",
@@ -41,7 +41,7 @@ public interface UsersRepository {
         public UsersBean getUserByEmail(UsersBean bean) throws Exception;
 
         // @Select({
-        //         " select u.user_id,r.role_id,r.role_name,u.email,u.fullname,COALESCE(u.tel, '') AS tel,u.profile_img_path,  ",
+        //         " select u.user_id,r.role_id,r.role_name,u.email,u.fullname,COALESCE(u.tel, '') AS tel,  ",
         //         " f.faculty_name,b.branch_name from users u  ",
         //         " inner join branches b on u.branch_id = b.branch_id ",
         //         " inner join faculties f on b.faculty_id = f.faculty_id ",

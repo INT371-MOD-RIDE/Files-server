@@ -3,6 +3,7 @@ package sit.int371.modride_service.controllers;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
@@ -16,14 +17,24 @@ import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import sit.int371.modride_service.beans.APIResponseBean;
+import sit.int371.modride_service.beans.ErrorsBean;
 import sit.int371.modride_service.beans.UsersBean;
+import sit.int371.modride_service.beans.files_beans.FilesDataBean;
+import sit.int371.modride_service.beans.files_beans.UsersFilesBean;
 import sit.int371.modride_service.entities.File;
 import sit.int371.modride_service.payload.Response;
+import sit.int371.modride_service.repositories.EventsRepository;
 import sit.int371.modride_service.repositories.FileRepository;
+import sit.int371.modride_service.repositories.FilesRepository;
 import sit.int371.modride_service.services.DBFileService;
 import sit.int371.modride_service.services.FilesService;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import java.io.IOException;
+import java.net.http.HttpResponse;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 import java.util.regex.Pattern;
@@ -31,32 +42,85 @@ import java.util.regex.Pattern;
 @RestController
 @RequestMapping("/api_files/v1/files")
 public class FilesController extends BaseController {
+
+    @Value("${uri_userfile_storage}")
+    public String uriUserProfile;
+
+    @Value("${download_user_file}")
+    public String downloadUserFile;
+
     @Autowired
     private FilesService filesService;
+
+    @Autowired
+    private FilesRepository filesRepository;
+
+    ErrorsBean errorsBean = new ErrorsBean();
+
+    @GetMapping("/getFile/{file_name}")
+    public ResponseEntity<?> getFile(HttpServletRequest request, HttpServletResponse response,
+            @PathVariable String file_name) {
+        APIResponseBean res = new APIResponseBean();
+        byte[] fileData = new byte[0];
+        try {
+            System.out.println("download/get - file");
+            fileData = filesService.downloadFileFromFileSystem(file_name);
+            res.setData(
+                    ResponseEntity.status(HttpStatus.OK).contentType(MediaType.valueOf("image/png")).body(fileData));
+        } catch (Exception e) {
+            System.out.println("error ช่ะ?" + e);
+            System.out.println("geterrfile: " + errorsBean.getErrGetFile());
+
+            response.setStatus(400);
+            this.checkException(e, res, errorsBean.getErrGetFile());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(res);
+        }
+        return ResponseEntity.status(HttpStatus.OK).contentType(MediaType.valueOf("image/png")).body(fileData);
+    }
 
     @PostMapping(value = "/attachflie", consumes = { "multipart/form-data" })
     @ResponseBody
     public APIResponseBean createAttachment(
-            HttpServletRequest request, @RequestPart String userId,
+            HttpServletRequest request, HttpServletResponse response, @RequestPart String userId,
             @RequestParam(required = false) MultipartFile file) {
         APIResponseBean res = new APIResponseBean();
-
-        System.out.println("user-id: "+userId);
-        logger.info("file-upload" + file);
+        // HashMap<String, Object> params = new HashMap<>();
+        System.out.println("user-id: " + userId);
+        FilesDataBean filesDataBean = new FilesDataBean();
+        filesDataBean.setId(userId);
 
         try {
             System.out.println("file-data: " + file);
             String[] nameSplit = file.getOriginalFilename().split(Pattern.quote("."));
             String nameExtension = nameSplit[nameSplit.length - 1];
             if (filesService.checkTypeFileUpload(nameExtension)) {
-                filesService.createAttachmentContent(userId,file);
-                // res.setData(attachmentBean);
+                String fileName = filesService.createAttachmentContent(userId, file);
+                System.out.println("filesControl-FileName: " + fileName);
+                // params.put("file_name", fileName);
+                filesDataBean.setFile_name(fileName);
+                filesDataBean.setDownload_url(downloadUserFile + fileName);
+
+                List<UsersFilesBean> checkUserFiles = filesRepository.checkUserFiles(userId);
+                if (checkUserFiles.isEmpty()) {
+                    filesRepository.insertUserProfilePicture(filesDataBean);
+                } else {
+                    filesRepository.updateUserProfilePicture(filesDataBean);
+                }
+                // UsersBean userProfilePic = filesRepository.getUserProfilePicture(params);
+                // userProfilePic.setProfile_img_path(uriUserProfile +
+                // userProfilePic.getProfile_img_path());
+                // System.out.println("get-filename-fromDB: " +
+                // userProfilePic.getProfile_img_path());
+                // res.setData(userProfilePic.getProfile_img_path());
+                res.setResponse_desc("upload-files สำเร็จแล้ว");
             } else {
                 throw new Exception("Invalid File Type Upload");
             }
 
         } catch (Exception e) {
-            this.checkException(e, res);
+            response.setStatus(400);
+            this.checkException(e, res, null);
         }
         return res;
     }

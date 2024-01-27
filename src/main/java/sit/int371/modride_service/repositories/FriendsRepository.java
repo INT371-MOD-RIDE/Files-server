@@ -19,7 +19,7 @@ public interface FriendsRepository {
         // หน้าการแนะนำเพื่อน -- query clear ✅
         @Select({
                         " select u.user_id,f.faculty_id,u.email,u.fullname, ",
-                        " u.tel,u.profile_img_path,f.faculty_name,b.branch_name, ",
+                        " u.tel,f.faculty_name,b.branch_name, ",
                         " fs.user_id as my_id,fs.friend_id,fs.friend_status ",
                         " from users u  ",
                         " inner join branches b on u.branch_id = b.branch_id ",
@@ -35,7 +35,7 @@ public interface FriendsRepository {
         // หน้ารายการเพื่อน -- friend-list section ✅
         @Select({
                         " select u.user_id,f.faculty_id,u.email,u.fullname, ",
-                        " u.tel,u.profile_img_path,f.faculty_name,b.branch_name, ",
+                        " u.tel,f.faculty_name,b.branch_name, ",
                         " fs.friend_id,fs.friend_status ",
                         " from users u  ",
                         " inner join branches b on u.branch_id = b.branch_id ",
@@ -49,7 +49,7 @@ public interface FriendsRepository {
         // คำขอเป็นเพื่อน -- friend-request ✅
         @Select({
                 " select u.user_id,f.faculty_id,u.email,u.fullname, ",
-                " u.tel,u.profile_img_path,f.faculty_name,b.branch_name, ",
+                " u.tel,f.faculty_name,b.branch_name, ",
                 " fs.friend_id,fs.friend_status ",
                 " from users u  ",
                 " inner join branches b on u.branch_id = b.branch_id ",

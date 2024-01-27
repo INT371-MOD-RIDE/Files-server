@@ -29,7 +29,7 @@ public interface EventsRepository {
                         // " order by create_date desc ",
                         " SELECT e.event_id,e.user_id,e.event_name,e.event_detail, ",
                         " e.departure_time,e.seats,e.costs,e.status,e.create_date,e.update_date ",
-                        " ,u.fullname,u.profile_img_path,r.rate,r.total,f.faculty_name,b.branch_name ",
+                        " ,u.fullname,r.rate,r.total,f.faculty_name,b.branch_name ",
                         " ,case when el.start_name is null then el.start_point else el.start_name end as start_point  ",
                         " ,case when el.dest_name is null then el.dest_point else el.dest_name end as dest_point ",
                         " FROM events e ",
@@ -47,7 +47,7 @@ public interface EventsRepository {
         @Select({
                         " SELECT e.event_id,e.user_id,e.event_name,e.event_detail, ",
                         " e.departure_time,e.seats,e.costs,e.create_date,e.update_date ",
-                        " ,u.fullname,u.email,u.tel,u.other_contact,u.contact_info,u.profile_img_path,f.faculty_name,b.branch_name ",
+                        " ,u.fullname,u.email,u.tel,u.other_contact,u.contact_info,f.faculty_name,b.branch_name ",
                         " ,v.brand,v.model,v.vehicle_type,v.vehicle_color,v.license,v.car_img_path,v.vehicle_id ",
                         " ,el.start_point,el.dest_point ",
                         " FROM events e ",
@@ -71,7 +71,7 @@ public interface EventsRepository {
                         // " inner join branches b on u.branch_id = b.branch_id ",
                         // " inner join faculties f on b.faculty_id = f.faculty_id ",
                         // " where event_id = #{event_id} ",
-                        " SELECT m.members_id,m.event_id,m.user_id,u.fullname,f.faculty_name,b.branch_name,u.profile_img_path, ",
+                        " SELECT m.members_id,m.event_id,m.user_id,u.fullname,f.faculty_name,b.branch_name, ",
                         " CASE WHEN m.user_id = e.user_id THEN ra.total END AS total, ",
                         " CASE WHEN m.user_id = e.user_id THEN ra.rate END AS rate, ",
                         " CASE WHEN m.user_id = e.user_id THEN 'driver' ELSE 'passenger' END AS role_name, ",
@@ -176,7 +176,7 @@ public interface EventsRepository {
 
         // For chat
         @Select({
-                        " select e.event_id,e.event_name,m.user_id,u.fullname,u.profile_img_path,m.status ",
+                        " select e.event_id,e.event_name,m.user_id,u.fullname,m.status ",
                         " from events e ",
                         " left join members m on e.event_id=m.event_id ",
                         " left join users u on m.user_id=u.user_id ",
@@ -187,7 +187,7 @@ public interface EventsRepository {
         public List<ChatBean> getChatRoom(HashMap<String, Object> params) throws Exception;
 
         @Select({
-                        " select e.event_id,e.event_name,m.user_id,u.fullname,u.profile_img_path ",
+                        " select e.event_id,e.event_name,m.user_id,u.fullname ",
                         " from events e ",
                         " left join members m on e.event_id=m.event_id ",
                         " left join users u on m.user_id=u.user_id ",
@@ -205,7 +205,7 @@ public interface EventsRepository {
     })
     public Integer getMemberCount(HashMap<String, Object> params) throws Exception;
     @Select({
-            " SELECT m.members_id,m.event_id,m.user_id,u.fullname,f.faculty_name,b.branch_name,u.profile_img_path, ",
+            " SELECT m.members_id,m.event_id,m.user_id,u.fullname,f.faculty_name,b.branch_name, ",
             " CASE WHEN m.user_id = e.user_id THEN ra.total END AS total, ",
             " CASE WHEN m.user_id = e.user_id THEN ra.rate END AS rate, ",
             " CASE WHEN m.user_id = e.user_id THEN 'driver' ELSE 'passenger' END AS role_name, ",
