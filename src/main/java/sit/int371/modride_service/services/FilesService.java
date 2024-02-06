@@ -25,6 +25,10 @@ public class FilesService extends BaseController {
 
     @Value("${uri_userfile_storage}")
     public String uriUserProfile;
+    @Value("${uri_vehicle_storage}")
+    public String uriVehicle;
+    @Value("${uri_license_storage}")
+    public String uriLicense;
 
     @Autowired
     private FilesRepository filesRepository;
@@ -44,7 +48,7 @@ public class FilesService extends BaseController {
         }
     }
 
-    public String createAttachmentContent(String userId, MultipartFile file)
+    public String createAttachmentContent(String id, MultipartFile file, String category)
             throws Exception {
         try {
             System.out.println("origin-filename: " + file.getOriginalFilename());
@@ -68,14 +72,48 @@ public class FilesService extends BaseController {
             // System.out.println("after-bean: " + attachmentBean);
 
             System.out.println("files-ext: " + fileExtension);
-            String fileName = 'u' + userId; // setCustomfileNameWithUserIdAndFX
+            String fileName = "";
+            File targetOriginJpgFile = new File("");
+            File targetOriginJpegFile = new File("");
+            File targetOriginPngFile = new File("");
+            File target = new File("");
+            File uploadDir = new File("");
+            switch (category) {
+                case "user":
+                    fileName = 'u' + id; // setCustomfileNameWithIdAndFX
+                    targetOriginJpgFile = new File(uriUserProfile + fileName + ".jpg");
+                    targetOriginJpegFile = new File(uriUserProfile + fileName + ".jpeg");
+                    targetOriginPngFile = new File(uriUserProfile + fileName + ".png");
+                    // set finaltarget ในการ upload-file
+                    fileName = fileName + fileExtension;
+                    target = new File(uriUserProfile + fileName);
+                    uploadDir = new File(uriUserProfile);
+                    break;
+                case "license":
+                    fileName = 'l' + id; // setCustomfileNameWithIdAndFX
+                    targetOriginJpgFile = new File(uriLicense + fileName + ".jpg");
+                    targetOriginJpegFile = new File(uriLicense + fileName + ".jpeg");
+                    targetOriginPngFile = new File(uriLicense + fileName + ".png");
+                    // set finaltarget ในการ upload-file
+                    fileName = fileName + fileExtension;
+                    target = new File(uriLicense + fileName);
+                    uploadDir = new File(uriLicense);
+                    break;
+                case "vehicle":
+                    fileName = 'v' + id; // setCustomfileNameWithIdAndFX
+                    targetOriginJpgFile = new File(uriVehicle + fileName + ".jpg");
+                    targetOriginJpegFile = new File(uriVehicle + fileName + ".jpeg");
+                    targetOriginPngFile = new File(uriVehicle + fileName + ".png");
+                    // set finaltarget ในการ upload-file
+                    fileName = fileName + fileExtension;
+                    target = new File(uriVehicle + fileName);
+                    uploadDir = new File(uriVehicle);
+                    break;
+            }
 
             // เพื่อทำ replace file ที่เป็นชื่อเดียวกัน แต่คนละสกุลไฟล์
             // (ลบไฟล์พวกนั้นทั้งหมด)
             // 📝 อนาคต เด่วเขียน function แยกออกไป เพื่อให้ใน method นี้ดู clean กว่านี้
-            File targetOriginJpgFile = new File(uriUserProfile + fileName + ".jpg");
-            File targetOriginJpegFile = new File(uriUserProfile + fileName + ".jpeg");
-            File targetOriginPngFile = new File(uriUserProfile + fileName + ".png");
             if (targetOriginJpgFile.exists() || targetOriginJpegFile.exists() || targetOriginPngFile.exists()) {
                 System.out.println("same-name(jpg)-exist???: " + targetOriginJpgFile.exists());
                 System.out.println("same-name(jpeg)-exist???: " + targetOriginJpegFile.exists());
@@ -86,9 +124,6 @@ public class FilesService extends BaseController {
             }
 
             // การ upload file ลงไปยัง dir ที่ต้องการ
-            File uploadDir = new File(uriUserProfile);
-            fileName = fileName + fileExtension;
-            File target = new File(uriUserProfile + fileName);
             if (uploadDir.mkdir()) {
                 file.transferTo(target);
                 System.out.println("if : " + target);
@@ -109,11 +144,32 @@ public class FilesService extends BaseController {
         APIResponseBean res = new APIResponseBean();
         FilesDataBean filesDataBean = new FilesDataBean();
         filesDataBean.setFile_name(fileName);
-        filesDataBean.setUri_files_storage(uriUserProfile);
+        char firstLetterFN = getFirstLetter(fileName);
+        System.out.println("first-letter-file: " + firstLetterFN);
+        switch (firstLetterFN) {
+            case 'u':
+                filesDataBean.setUri_files_storage(uriUserProfile);
+                break;
+            case 'l':
+                filesDataBean.setUri_files_storage(uriLicense);
+                break;
+            case 'v':
+                filesDataBean.setUri_files_storage(uriVehicle);
+                break;
+        }
         // ต้อง get filename ออกมา
         try {
-            System.out.println("service ทำงาน?");
-            filesDataBean = filesRepository.getUserProfilePicture(filesDataBean);
+            switch (firstLetterFN) {
+                case 'u':
+                    filesDataBean = filesRepository.getUserProfilePicture(filesDataBean);
+                    break;
+                case 'l':
+                    filesDataBean = filesRepository.getLicensePicture(filesDataBean);
+                    break;
+                case 'v':
+                    filesDataBean = filesRepository.getVehiclePicture(filesDataBean);
+                    break;
+            }
             if (filesDataBean == null) {
                 throw new Exception("files not found !");
             }
@@ -123,9 +179,48 @@ public class FilesService extends BaseController {
         }
         System.out.println(filesDataBean.getFile_name());
         byte[] files = Files.readAllBytes(new File(filesDataBean.getFile_name()).toPath());
-        System.out.println("files???: " + files);
         return files;
 
+    }
+
+    private static char getFirstLetter(String text) {
+        // Check if the text is not empty
+        if (text != null && !text.isEmpty()) {
+            // Get the first character
+            return text.charAt(0);
+        } else {
+            // Return a default value or handle the case where the text is empty
+            throw new IllegalArgumentException("Text cannot be null or empty");
+        }
+    }
+
+    public void deleteFiles(String fileName, String category)
+            throws Exception {
+        try {
+            File targetFile = new File("");
+            switch (category) {
+                case "user":
+                  
+                    break;
+                case "license":
+                  
+                    break;
+                case "vehicle":
+                   targetFile = new File(uriVehicle + fileName);
+                   System.out.println("targetFile: "+targetFile);
+
+                    break;
+            }
+
+            if (targetFile.exists()) {
+                System.out.println("exist!!!");
+                targetFile.delete();
+            }
+
+        } catch (Exception e) {
+            System.out.println("Got an exception. {}" + e.getMessage());
+            throw e;
+        }
     }
 
 }

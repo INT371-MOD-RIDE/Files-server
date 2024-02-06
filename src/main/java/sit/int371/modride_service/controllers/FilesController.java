@@ -19,8 +19,11 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import sit.int371.modride_service.beans.APIResponseBean;
 import sit.int371.modride_service.beans.ErrorsBean;
 import sit.int371.modride_service.beans.UsersBean;
+import sit.int371.modride_service.beans.VehiclesBean;
 import sit.int371.modride_service.beans.files_beans.FilesDataBean;
+import sit.int371.modride_service.beans.files_beans.LicensesFilesBean;
 import sit.int371.modride_service.beans.files_beans.UsersFilesBean;
+import sit.int371.modride_service.beans.files_beans.VehiclesFilesBean;
 import sit.int371.modride_service.entities.File;
 import sit.int371.modride_service.payload.Response;
 import sit.int371.modride_service.repositories.EventsRepository;
@@ -45,9 +48,13 @@ public class FilesController extends BaseController {
 
     @Value("${uri_userfile_storage}")
     public String uriUserProfile;
+    @Value("${uri_vehicle_storage}")
+    public String uriVehicle;
+    @Value("${uri_license_storage}")
+    public String uriLicense;
 
-    @Value("${download_user_file}")
-    public String downloadUserFile;
+    @Value("${download_file}")
+    public String downloadFileUrl;
 
     @Autowired
     private FilesService filesService;
@@ -82,37 +89,61 @@ public class FilesController extends BaseController {
     @PostMapping(value = "/attachflie", consumes = { "multipart/form-data" })
     @ResponseBody
     public APIResponseBean createAttachment(
-            HttpServletRequest request, HttpServletResponse response, @RequestPart String userId,
+            HttpServletRequest request, HttpServletResponse response, @RequestPart String id,
+            @RequestPart String category,
             @RequestParam(required = false) MultipartFile file) {
         APIResponseBean res = new APIResponseBean();
-        // HashMap<String, Object> params = new HashMap<>();
-        System.out.println("user-id: " + userId);
+        HashMap<String, Object> params = new HashMap<>();
+        System.out.println("user-id: " + id);
+        System.out.println("category: " + category);
         FilesDataBean filesDataBean = new FilesDataBean();
-        filesDataBean.setId(userId);
+        filesDataBean.setId(id);
 
         try {
             System.out.println("file-data: " + file);
             String[] nameSplit = file.getOriginalFilename().split(Pattern.quote("."));
             String nameExtension = nameSplit[nameSplit.length - 1];
             if (filesService.checkTypeFileUpload(nameExtension)) {
-                String fileName = filesService.createAttachmentContent(userId, file);
+                String fileName = filesService.createAttachmentContent(id, file, category);
                 System.out.println("filesControl-FileName: " + fileName);
-                // params.put("file_name", fileName);
+                params.put("file_name", fileName);
                 filesDataBean.setFile_name(fileName);
-                filesDataBean.setDownload_url(downloadUserFile + fileName);
+                filesDataBean.setDownload_url(downloadFileUrl + fileName);
+                switch (category) {
+                    case "user":
+                        List<UsersFilesBean> checkUserFiles = filesRepository.checkUserFiles(id);
+                        if (checkUserFiles.isEmpty()) {
+                            filesRepository.insertUserProfilePicture(filesDataBean);
+                        } else {
+                            filesRepository.updateUserProfilePicture(filesDataBean);
+                        }
+                        // UsersBean userProfilePic = filesRepository.getUserProfilePicture(params);
+                        // userProfilePic.setProfile_img_path(uriUserProfile +
+                        // userProfilePic.getProfile_img_path());
+                        // System.out.println("get-filename-fromDB: " +
+                        // userProfilePic.getProfile_img_path());
+                        // res.setData(userProfilePic.getProfile_img_path());
+                        break;
 
-                List<UsersFilesBean> checkUserFiles = filesRepository.checkUserFiles(userId);
-                if (checkUserFiles.isEmpty()) {
-                    filesRepository.insertUserProfilePicture(filesDataBean);
-                } else {
-                    filesRepository.updateUserProfilePicture(filesDataBean);
+                    case "license":
+                        List<LicensesFilesBean> checkLicenseFiles = filesRepository.checkLicenseFiles(id);
+                        if (checkLicenseFiles.isEmpty()) {
+                            filesRepository.insertLicensePicture(filesDataBean);
+                        } else {
+                            filesRepository.updateLicensePicture(filesDataBean);
+                        }
+                        break;
+
+                    case "vehicle":
+                        List<VehiclesFilesBean> checkVehicleFiles = filesRepository.checkVehicleFiles(id);
+                        if (checkVehicleFiles.isEmpty()) {
+                            filesRepository.insertVehiclePicture(filesDataBean);
+                        } else {
+                            filesRepository.updateVehiclePicture(filesDataBean);
+                        }
+                        break;
                 }
-                // UsersBean userProfilePic = filesRepository.getUserProfilePicture(params);
-                // userProfilePic.setProfile_img_path(uriUserProfile +
-                // userProfilePic.getProfile_img_path());
-                // System.out.println("get-filename-fromDB: " +
-                // userProfilePic.getProfile_img_path());
-                // res.setData(userProfilePic.getProfile_img_path());
+
                 res.setResponse_desc("upload-files สำเร็จแล้ว");
             } else {
                 throw new Exception("Invalid File Type Upload");
@@ -124,6 +155,23 @@ public class FilesController extends BaseController {
         }
         return res;
     }
+
+    // delete-files
+    @DeleteMapping("/deleteVehicle")
+    public APIResponseBean deleteVehicle(HttpServletRequest request,@RequestBody VehiclesBean bean)
+    {
+        APIResponseBean res = new APIResponseBean();
+        try {
+           filesRepository.deleteVehicleFile(bean);
+           filesService.deleteFiles(bean.getVehicle_file_name(), bean.getCategory());
+           filesRepository.deleteVehicle(bean);
+            res.setResponse_desc("delete vehicle success");;
+        } catch (Exception e) {
+            this.checkException(e, res,null);
+        }
+        return res;
+    }
+
 
     // ⚠️ code เก่า...แต่เก็บไว้ก่อน
     // ---------------------------------------------------------------------
