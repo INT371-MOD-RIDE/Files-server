@@ -200,14 +200,15 @@ public class FilesService extends BaseController {
             File targetFile = new File("");
             switch (category) {
                 case "user":
-                  
+
                     break;
                 case "license":
-                  
+                    targetFile = new File(uriLicense + fileName);
+
                     break;
                 case "vehicle":
-                   targetFile = new File(uriVehicle + fileName);
-                   System.out.println("targetFile: "+targetFile);
+                    targetFile = new File(uriVehicle + fileName);
+                    System.out.println("targetFile: " + targetFile);
 
                     break;
             }

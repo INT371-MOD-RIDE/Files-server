@@ -1,4 +1,4 @@
-package sit.int371.modride_service.beans;
+package sit.int371.modride_service.beans.driver_profile;
 import java.util.List;
 import lombok.Data;
 

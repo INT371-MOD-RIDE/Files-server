@@ -16,7 +16,7 @@ import sit.int371.modride_service.beans.EventDetailBean;
 import sit.int371.modride_service.beans.EventMemberBean;
 import sit.int371.modride_service.beans.EventsBean;
 import sit.int371.modride_service.beans.UsersBean;
-import sit.int371.modride_service.beans.VehiclesBean;
+import sit.int371.modride_service.beans.driver_profile.VehiclesBean;
 import sit.int371.modride_service.provider.EventsSqlProvider;
 
 @Mapper
@@ -84,7 +84,7 @@ public interface EventsRepository {
                         " LEFT JOIN faculties f ON b.faculty_id = f.faculty_id ",
                         " LEFT JOIN events e ON m.user_id = e.user_id AND m.event_id = e.event_id ",
                         " LEFT JOIN ratings ra ON m.user_id = ra.user_id ",
-                        " WHERE m.event_id = #{event_id} " ,
+                        " WHERE m.event_id = #{event_id} ",
                         " And m.status = 1 ",
         })
         public List<EventMemberBean> getEventMembers(HashMap<String, Object> event_id) throws Exception;
@@ -197,29 +197,30 @@ public interface EventsRepository {
         })
         public List<ChatBean> getChatRoomMember(HashMap<String, Object> params) throws Exception;
 
-    @Select({
-            " select count(members_id) ",
-            " from members ",
-            " where event_id= #{event_id} ",
-            " and status = 1 ",
-    })
-    public Integer getMemberCount(HashMap<String, Object> params) throws Exception;
-    @Select({
-            " SELECT m.members_id,m.event_id,m.user_id,u.fullname,f.faculty_name,b.branch_name, ",
-            " CASE WHEN m.user_id = e.user_id THEN ra.total END AS total, ",
-            " CASE WHEN m.user_id = e.user_id THEN ra.rate END AS rate, ",
-            " CASE WHEN m.user_id = e.user_id THEN 'driver' ELSE 'passenger' END AS role_name, ",
-            " r.role_name as role_check ",
-            " FROM members m ",
-            " LEFT JOIN users u ON u.user_id = m.user_id ",
-            // " LEFT JOIN roles ur ON ur.user_id = u.user_id ",
-            " LEFT JOIN roles r ON r.role_id = u.role_id ",
-            " LEFT JOIN branches b ON u.branch_id = b.branch_id ",
-            " LEFT JOIN faculties f ON b.faculty_id = f.faculty_id ",
-            " LEFT JOIN events e ON m.user_id = e.user_id AND m.event_id = e.event_id ",
-            " LEFT JOIN ratings ra ON m.user_id = ra.user_id ",
-            " WHERE m.event_id = #{event_id} ",
-            " And m.status = 0 ",
-    })
-    public List<EventMemberBean> getRequestMembers(HashMap<String, Object> event_id) throws Exception;
+        @Select({
+                        " select count(members_id) ",
+                        " from members ",
+                        " where event_id= #{event_id} ",
+                        " and status = 1 ",
+        })
+        public Integer getMemberCount(HashMap<String, Object> params) throws Exception;
+
+        @Select({
+                        " SELECT m.members_id,m.event_id,m.user_id,u.fullname,f.faculty_name,b.branch_name, ",
+                        " CASE WHEN m.user_id = e.user_id THEN ra.total END AS total, ",
+                        " CASE WHEN m.user_id = e.user_id THEN ra.rate END AS rate, ",
+                        " CASE WHEN m.user_id = e.user_id THEN 'driver' ELSE 'passenger' END AS role_name, ",
+                        " r.role_name as role_check ",
+                        " FROM members m ",
+                        " LEFT JOIN users u ON u.user_id = m.user_id ",
+                        // " LEFT JOIN roles ur ON ur.user_id = u.user_id ",
+                        " LEFT JOIN roles r ON r.role_id = u.role_id ",
+                        " LEFT JOIN branches b ON u.branch_id = b.branch_id ",
+                        " LEFT JOIN faculties f ON b.faculty_id = f.faculty_id ",
+                        " LEFT JOIN events e ON m.user_id = e.user_id AND m.event_id = e.event_id ",
+                        " LEFT JOIN ratings ra ON m.user_id = ra.user_id ",
+                        " WHERE m.event_id = #{event_id} ",
+                        " And m.status = 0 ",
+        })
+        public List<EventMemberBean> getRequestMembers(HashMap<String, Object> event_id) throws Exception;
 }

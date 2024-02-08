@@ -19,7 +19,9 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import sit.int371.modride_service.beans.APIResponseBean;
 import sit.int371.modride_service.beans.ErrorsBean;
 import sit.int371.modride_service.beans.UsersBean;
-import sit.int371.modride_service.beans.VehiclesBean;
+import sit.int371.modride_service.beans.driver_profile.VehiclesBean;
+import sit.int371.modride_service.beans.driver_profile.DriverProfileBean;
+import sit.int371.modride_service.beans.driver_profile.LicensesBean;
 import sit.int371.modride_service.beans.files_beans.FilesDataBean;
 import sit.int371.modride_service.beans.files_beans.LicensesFilesBean;
 import sit.int371.modride_service.beans.files_beans.UsersFilesBean;
@@ -158,20 +160,43 @@ public class FilesController extends BaseController {
 
     // delete-files
     @DeleteMapping("/deleteVehicle")
-    public APIResponseBean deleteVehicle(HttpServletRequest request,@RequestBody VehiclesBean bean)
-    {
+    public APIResponseBean deleteVehicle(HttpServletRequest request, @RequestBody VehiclesBean bean) {
         APIResponseBean res = new APIResponseBean();
         try {
-           filesRepository.deleteVehicleFile(bean);
-           filesService.deleteFiles(bean.getVehicle_file_name(), bean.getCategory());
-           filesRepository.deleteVehicle(bean);
-            res.setResponse_desc("delete vehicle success");;
+            filesRepository.deleteVehicleFile(bean);
+            filesService.deleteFiles(bean.getVehicle_file_name(), bean.getCategory());
+            filesRepository.deleteVehicle(bean);
+            res.setResponse_desc("delete vehicle success");
+            ;
         } catch (Exception e) {
-            this.checkException(e, res,null);
+            this.checkException(e, res, null);
         }
         return res;
     }
 
+    // delete-driver-profile : requrie -- {vehicle_id & license_id}
+    @DeleteMapping("/deleteDriverProfile")
+    public APIResponseBean deleteDriverProfile(HttpServletRequest request, @RequestBody DriverProfileBean bean) {
+        APIResponseBean res = new APIResponseBean();
+        try {
+            // loop for delete all vehicles relate to their license
+            for (VehiclesBean vehiclesBean : bean.getVehicleList()) {
+                filesRepository.deleteVehicleFile(vehiclesBean);
+                filesRepository.deleteVehicle(vehiclesBean);
+                filesService.deleteFiles(vehiclesBean.getVehicle_file_name(), vehiclesBean.getCategory());
+            }
+            filesRepository.deleteLicenseFile(bean.getLicenseDetail());
+            filesService.deleteFiles(bean.getLicenseDetail().getLicense_file_name(),
+                    bean.getLicenseDetail().getCategory());
+            filesRepository.deleteLicenseAppStatus(bean.getLicenseDetail());
+            filesRepository.deleteLicense(bean.getLicenseDetail());
+            res.setResponse_desc("delete driver-profile success");
+            ;
+        } catch (Exception e) {
+            this.checkException(e, res, null);
+        }
+        return res;
+    }
 
     // ⚠️ code เก่า...แต่เก็บไว้ก่อน
     // ---------------------------------------------------------------------

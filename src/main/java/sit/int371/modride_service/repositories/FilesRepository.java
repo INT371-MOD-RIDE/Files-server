@@ -10,7 +10,8 @@ import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Update;
 
 import sit.int371.modride_service.beans.UsersBean;
-import sit.int371.modride_service.beans.VehiclesBean;
+import sit.int371.modride_service.beans.driver_profile.LicensesBean;
+import sit.int371.modride_service.beans.driver_profile.VehiclesBean;
 import sit.int371.modride_service.beans.files_beans.FilesDataBean;
 import sit.int371.modride_service.beans.files_beans.LicensesFilesBean;
 import sit.int371.modride_service.beans.files_beans.UsersFilesBean;
@@ -100,6 +101,8 @@ public interface FilesRepository {
         })
         public void updateVehiclePicture(FilesDataBean filesDataBean) throws Exception;
 
+        // if delete: driver-profile = use all delete() below
+        // delete vehicles with vehicle_files
         @Delete({
                         " delete from vehicle_files  ",
                         " where vehicle_id = #{vehicle_id} ",
@@ -111,5 +114,20 @@ public interface FilesRepository {
                         " where vehicle_id = #{vehicle_id} ",
         })
         public void deleteVehicle(VehiclesBean vehiclesBean) throws Exception;
+
+        @Delete({
+                        " delete from license_files where license_id = #{license_id} "
+        })
+        public void deleteLicenseFile(LicensesBean licensesBean) throws Exception;
+
+        @Delete({
+                        " delete from license_approval_status where license_id = #{license_id} "
+        })
+        public void deleteLicenseAppStatus(LicensesBean licensesBean) throws Exception;
+
+        @Delete({
+                        " delete from licenses where license_id = #{license_id} "
+        })
+        public void deleteLicense(LicensesBean licensesBean) throws Exception;
 
 }
