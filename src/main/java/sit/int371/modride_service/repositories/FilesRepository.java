@@ -19,6 +19,24 @@ import sit.int371.modride_service.beans.files_beans.VehiclesFilesBean;
 
 @Mapper
 public interface FilesRepository {
+        @Select({
+                        " select * from events e  ",
+                        " inner join licenses l on e.user_id = l.user_id ",
+                        " where l.license_id = #{license_id} ",
+        })
+        public List<LicensesBean> checkEvent(Integer license_id) throws Exception;
+
+        @Select({
+                        " select l.user_id,l.license_id,l.license_fn,l.license_ln ",
+                        " ,lf.license_file_name,lf.license_download ",
+                        " ,ls.approval_status,ls.denied_detail,ls.timestamp ",
+                        " from licenses l  ",
+                        " inner join users u on l.user_id = u.user_id ",
+                        " inner join license_files lf on l.license_id = lf.license_id ",
+                        " inner join license_approval_status ls on l.license_id = ls.license_id ",
+                        " where l.license_id = #{license_id} ",
+        })
+        public LicensesBean getLicenseDetail(Integer license_id) throws Exception;
 
         @Select({
                         " select concat(#{uri_files_storage},profile_img_name) as file_name from users_files ",

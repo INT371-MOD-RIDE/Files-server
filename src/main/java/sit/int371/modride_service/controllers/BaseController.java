@@ -20,22 +20,25 @@ public class BaseController implements Serializable {
 	public static final String METHOD_PUT = "put";
 	public static final String METHOD_DELETE = "delete";
 
+	// Custom http-status number
+	public static final Integer UnprocessableContentStatus = 422;
+
 	protected APIResponseBean checkException(Exception e, APIResponseBean res, String errorType) {
 		System.out.println("hello custom-exception");
 		System.out.println("expception found: " + e.getMessage());
 
 		if (e.getMessage() != null) {
 			if (e.getMessage().equals(MSG_404)) {
-				res.setResponse_code("40400");
+				res.setResponse_code(404);
 				res.setResponse_desc(e.getMessage());
 			} else if (e.getMessage().equals(MSG_401)) {
-				res.setResponse_code("40100");
+				res.setResponse_code(401);
 				res.setResponse_desc(e.getMessage());
 			} else if (e.getMessage().contains("is required.") || e.getMessage().contains("should not be")) {
-				res.setResponse_code("40000");
+				res.setResponse_code(400);
 				res.setResponse_desc(e.getMessage());
 			} else if (e.getMessage().contains("Duplicate")) {
-				res.setResponse_code("40900");
+				res.setResponse_code(409);
 				if (e.getCause() != null) {
 					res.setResponse_desc("Duplicated data, " + e.getCause().getMessage() + ".");
 				} else {
@@ -43,7 +46,7 @@ public class BaseController implements Serializable {
 				}
 			} else {
 				logger.info("Got an exception. {}", e.getMessage());
-				res.setResponse_code("400");
+				res.setResponse_code(400);
 				res.setResponse_desc(e.getMessage());
 				// res.setResponse_desc("API error please contact administrator.");
 			}
@@ -52,13 +55,13 @@ public class BaseController implements Serializable {
 			switch (errorType) {
 				case "get_file":
 					System.out.println("error เกี่ยวกับหาไฟล์ไม่เจอ");
-					res.setResponse_code("400");
+					res.setResponse_code(400);
 					res.setResponse_desc("files not found !");
 					// throw Exception();
 					break;
 
 				default:
-					res.setResponse_code("400");
+					res.setResponse_code(400);
 					res.setResponse_desc(e.getMessage());
 					break;
 			}

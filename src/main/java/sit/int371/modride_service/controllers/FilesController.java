@@ -131,9 +131,15 @@ public class FilesController extends BaseController {
                         List<LicensesFilesBean> checkLicenseFiles = filesRepository.checkLicenseFiles(id);
                         if (checkLicenseFiles.isEmpty()) {
                             filesRepository.insertLicensePicture(filesDataBean);
+                            LicensesBean licensesBean = filesRepository
+                                    .getLicenseDetail(Integer.parseInt(filesDataBean.getId()));
+                            res.setData(licensesBean);
                         } else {
                             filesRepository.updateLicensePicture(filesDataBean);
                         }
+                        LicensesBean licensesBean = filesRepository
+                                .getLicenseDetail(Integer.parseInt(filesDataBean.getId()));
+                        res.setData(licensesBean);
                         break;
 
                     case "vehicle":
@@ -176,22 +182,29 @@ public class FilesController extends BaseController {
 
     // delete-driver-profile : requrie -- {vehicle_id & license_id}
     @DeleteMapping("/deleteDriverProfile")
-    public APIResponseBean deleteDriverProfile(HttpServletRequest request, @RequestBody DriverProfileBean bean) {
+    public APIResponseBean deleteDriverProfile(HttpServletRequest request,HttpServletResponse response, @RequestBody DriverProfileBean bean) {
         APIResponseBean res = new APIResponseBean();
         try {
-            // loop for delete all vehicles relate to their license
-            for (VehiclesBean vehiclesBean : bean.getVehicleList()) {
-                filesRepository.deleteVehicleFile(vehiclesBean);
-                filesRepository.deleteVehicle(vehiclesBean);
-                filesService.deleteFiles(vehiclesBean.getVehicle_file_name(), vehiclesBean.getCategory());
+            List<LicensesBean> licensesBeans = filesRepository.checkEvent(bean.getLicenseDetail().getLicense_id());
+            if (licensesBeans.isEmpty()) {
+                // loop for delete all vehicles relate to their license
+                for (VehiclesBean vehiclesBean : bean.getVehicleList()) {
+                    filesRepository.deleteVehicleFile(vehiclesBean);
+                    filesRepository.deleteVehicle(vehiclesBean);
+                    filesService.deleteFiles(vehiclesBean.getVehicle_file_name(), vehiclesBean.getCategory());
+                }
+                filesRepository.deleteLicenseFile(bean.getLicenseDetail());
+                filesService.deleteFiles(bean.getLicenseDetail().getLicense_file_name(),
+                        bean.getLicenseDetail().getCategory());
+                filesRepository.deleteLicenseAppStatus(bean.getLicenseDetail());
+                filesRepository.deleteLicense(bean.getLicenseDetail());
+                res.setResponse_desc("delete driver-profile success");
+            }else{
+                response.setStatus(UnprocessableContentStatus);
+                res.setResponse_code(UnprocessableContentStatus);
+                res.setResponse_desc("ไม่สามารถดำเนินการได้ เนื่องจากมีโพสต์การเดินทางอยู่");
             }
-            filesRepository.deleteLicenseFile(bean.getLicenseDetail());
-            filesService.deleteFiles(bean.getLicenseDetail().getLicense_file_name(),
-                    bean.getLicenseDetail().getCategory());
-            filesRepository.deleteLicenseAppStatus(bean.getLicenseDetail());
-            filesRepository.deleteLicense(bean.getLicenseDetail());
-            res.setResponse_desc("delete driver-profile success");
-            ;
+
         } catch (Exception e) {
             this.checkException(e, res, null);
         }
