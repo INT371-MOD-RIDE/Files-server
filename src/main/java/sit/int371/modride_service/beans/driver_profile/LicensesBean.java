@@ -10,6 +10,7 @@ public class LicensesBean {
     private String license_ln;
     private String license_file_name;
     private String license_download;
+    private Float license_size;
     // license-app-status
     private Integer approval_status;
     private String denied_detail;

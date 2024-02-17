@@ -92,12 +92,13 @@ public class FilesController extends BaseController {
     @ResponseBody
     public APIResponseBean createAttachment(
             HttpServletRequest request, HttpServletResponse response, @RequestPart String id,
-            @RequestPart String category,
+            @RequestPart String category, @RequestPart String size,
             @RequestParam(required = false) MultipartFile file) {
         APIResponseBean res = new APIResponseBean();
-        HashMap<String, Object> params = new HashMap<>();
+        // HashMap<String, Object> params = new HashMap<>();
         System.out.println("user-id: " + id);
         System.out.println("category: " + category);
+        System.out.println("size: " + size);
         FilesDataBean filesDataBean = new FilesDataBean();
         filesDataBean.setId(id);
 
@@ -106,18 +107,31 @@ public class FilesController extends BaseController {
             String[] nameSplit = file.getOriginalFilename().split(Pattern.quote("."));
             String nameExtension = nameSplit[nameSplit.length - 1];
             if (filesService.checkTypeFileUpload(nameExtension)) {
-                String fileName = filesService.createAttachmentContent(id, file, category);
-                System.out.println("filesControl-FileName: " + fileName);
-                params.put("file_name", fileName);
-                filesDataBean.setFile_name(fileName);
-                filesDataBean.setDownload_url(downloadFileUrl + fileName);
+                if (filesService.isMoreThanMaxSize(file)) {
+                    response.setStatus(UnprocessableContentStatus);
+                    res.setResponse_code(UnprocessableContentStatus);
+                    res.setResponse_desc("ขนาดไฟล์ต้องไม่เกิน 10 MB");
+                    return res;
+                }
+
+                // ⚠️ ควรจะ code function ให้สามารถแก้ file name เพื่อทำการ insert
+                // ให้ถูกต้องก่อน ที่จะ upload เข้า file-storage
+                System.out.println("filesControl-FileName: " + file.getOriginalFilename());
+                // params.put("file_name", file.getOriginalFilename());
+                filesDataBean.setSize(size);
+                String fileName;
                 switch (category) {
                     case "user":
+                        fileName = filesService.createAttachmentContent(id, file, category);
+                        filesDataBean.setFile_name(fileName);
+                        filesDataBean.setDownload_url(downloadFileUrl + fileName);
                         List<UsersFilesBean> checkUserFiles = filesRepository.checkUserFiles(id);
                         if (checkUserFiles.isEmpty()) {
                             filesRepository.insertUserProfilePicture(filesDataBean);
                         } else {
                             filesRepository.updateUserProfilePicture(filesDataBean);
+                            res.setResponse_desc("เปลี่ยนรูปโปรไฟล์สำเร็จ");
+                            return res;
                         }
                         // UsersBean userProfilePic = filesRepository.getUserProfilePicture(params);
                         // userProfilePic.setProfile_img_path(uriUserProfile +
@@ -128,14 +142,23 @@ public class FilesController extends BaseController {
                         break;
 
                     case "license":
+                        fileName = filesService.createAttachmentContent(id, file, category);
+                        filesDataBean.setFile_name(fileName);
+                        filesDataBean.setDownload_url(downloadFileUrl + fileName);
                         List<LicensesFilesBean> checkLicenseFiles = filesRepository.checkLicenseFiles(id);
                         if (checkLicenseFiles.isEmpty()) {
+                            System.out.println("license-can-upload");
                             filesRepository.insertLicensePicture(filesDataBean);
                             LicensesBean licensesBean = filesRepository
                                     .getLicenseDetail(Integer.parseInt(filesDataBean.getId()));
                             res.setData(licensesBean);
+
                         } else {
-                            filesRepository.updateLicensePicture(filesDataBean);
+                            // filesRepository.updateLicensePicture(filesDataBean);
+                            response.setStatus(UnprocessableContentStatus);
+                            res.setResponse_code(UnprocessableContentStatus);
+                            res.setResponse_desc("license id นี้ถูกใช้งานแล้ว");
+                            return res;
                         }
                         LicensesBean licensesBean = filesRepository
                                 .getLicenseDetail(Integer.parseInt(filesDataBean.getId()));
@@ -143,37 +166,60 @@ public class FilesController extends BaseController {
                         break;
 
                     case "vehicle":
+                        fileName = filesService.createAttachmentContent(id, file, category);
+                        filesDataBean.setFile_name(fileName);
+                        filesDataBean.setDownload_url(downloadFileUrl + fileName);
                         List<VehiclesFilesBean> checkVehicleFiles = filesRepository.checkVehicleFiles(id);
                         if (checkVehicleFiles.isEmpty()) {
                             filesRepository.insertVehiclePicture(filesDataBean);
                         } else {
-                            filesRepository.updateVehiclePicture(filesDataBean);
+                            response.setStatus(UnprocessableContentStatus);
+                            res.setResponse_code(UnprocessableContentStatus);
+                            res.setResponse_desc("vehicle id นี้ถูกใช้งานแล้ว");
+                            return res;
+
+                            // filesRepository.updateVehiclePicture(filesDataBean);
                         }
                         break;
-                }
 
+                    default:
+                        response.setStatus(UnprocessableContentStatus);
+                        res.setResponse_code(UnprocessableContentStatus);
+                        res.setResponse_desc("กรุณาระบุ Category ในการ Upload ให้ถูกต้อง");
+                        return res;
+                }
                 res.setResponse_desc("upload-files สำเร็จแล้ว");
             } else {
-                throw new Exception("Invalid File Type Upload");
+                response.setStatus(UnprocessableContentStatus);
+                res.setResponse_code(UnprocessableContentStatus);
+                res.setResponse_desc("สามารถอัปโหลดไฟล์ได้เฉพาะ (.jpg , .jpeg , .png)");
             }
 
         } catch (Exception e) {
-            response.setStatus(400);
+            response.setStatus(UnprocessableContentStatus);
             this.checkException(e, res, null);
+            res.setResponse_code(UnprocessableContentStatus);
         }
         return res;
     }
 
     // delete-files
     @DeleteMapping("/deleteVehicle")
-    public APIResponseBean deleteVehicle(HttpServletRequest request, @RequestBody VehiclesBean bean) {
+    public APIResponseBean deleteVehicle(HttpServletRequest request, HttpServletResponse response,
+            @RequestBody VehiclesBean bean) {
         APIResponseBean res = new APIResponseBean();
         try {
-            filesRepository.deleteVehicleFile(bean);
-            filesService.deleteFiles(bean.getVehicle_file_name(), bean.getCategory());
-            filesRepository.deleteVehicle(bean);
-            res.setResponse_desc("delete vehicle success");
-            ;
+            if (filesService.checkRelateWithEvent("vehicle", bean.getVehicle_id())) {
+                filesRepository.deleteVehicleFile(bean);
+                filesService.deleteFiles(bean.getVehicle_file_name(), bean.getCategory());
+                filesRepository.deleteVehicle(bean);
+                res.setResponse_desc("delete vehicle success");
+            } else {
+                response.setStatus(UnprocessableContentStatus);
+                res.setResponse_code(UnprocessableContentStatus);
+                res.setResponse_desc("ไม่สามารถดำเนินการได้ เนื่องจากมีโพสต์การเดินทางอยู่");
+            }
+
         } catch (Exception e) {
             this.checkException(e, res, null);
         }
@@ -182,11 +228,11 @@ public class FilesController extends BaseController {
 
     // delete-driver-profile : requrie -- {vehicle_id & license_id}
     @DeleteMapping("/deleteDriverProfile")
-    public APIResponseBean deleteDriverProfile(HttpServletRequest request,HttpServletResponse response, @RequestBody DriverProfileBean bean) {
+    public APIResponseBean deleteDriverProfile(HttpServletRequest request, HttpServletResponse response,
+            @RequestBody DriverProfileBean bean) {
         APIResponseBean res = new APIResponseBean();
         try {
-            List<LicensesBean> licensesBeans = filesRepository.checkEvent(bean.getLicenseDetail().getLicense_id());
-            if (licensesBeans.isEmpty()) {
+            if (filesService.checkRelateWithEvent("license", bean.getLicenseDetail().getLicense_id())) {
                 // loop for delete all vehicles relate to their license
                 for (VehiclesBean vehiclesBean : bean.getVehicleList()) {
                     filesRepository.deleteVehicleFile(vehiclesBean);
@@ -199,7 +245,7 @@ public class FilesController extends BaseController {
                 filesRepository.deleteLicenseAppStatus(bean.getLicenseDetail());
                 filesRepository.deleteLicense(bean.getLicenseDetail());
                 res.setResponse_desc("delete driver-profile success");
-            }else{
+            } else {
                 response.setStatus(UnprocessableContentStatus);
                 res.setResponse_code(UnprocessableContentStatus);
                 res.setResponse_desc("ไม่สามารถดำเนินการได้ เนื่องจากมีโพสต์การเดินทางอยู่");

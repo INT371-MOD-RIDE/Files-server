@@ -22,12 +22,20 @@ public class BaseController implements Serializable {
 
 	// Custom http-status number
 	public static final Integer UnprocessableContentStatus = 422;
+	public static final Integer UnSupportMediaTypeStatus = 415;
 
 	protected APIResponseBean checkException(Exception e, APIResponseBean res, String errorType) {
 		System.out.println("hello custom-exception");
 		System.out.println("expception found: " + e.getMessage());
 
 		if (e.getMessage() != null) {
+			// user_id นี้ไม่มีอยู่จริง [เกี่ยวกับ user files ใช้ user_id ที่ไม่มีอยู่จริง]
+			// --> วิธีนี้ยังไม่ดีเท่าไหร่
+			if (e.getMessage().contains(
+					"Cannot add or update a child row: a foreign key constraint fails (`modride`.`users_files`, CONSTRAINT `fk_users_files_users1` FOREIGN KEY (`owner_id`) REFERENCES `users` (`user_id`))")) {
+				res.setResponse_desc("ไม่มี user id นี้ในระบบ");
+				return res;
+			}
 			if (e.getMessage().equals(MSG_404)) {
 				res.setResponse_code(404);
 				res.setResponse_desc(e.getMessage());
@@ -55,14 +63,14 @@ public class BaseController implements Serializable {
 			switch (errorType) {
 				case "get_file":
 					System.out.println("error เกี่ยวกับหาไฟล์ไม่เจอ");
-					res.setResponse_code(400);
+					res.setResponse_code(UnprocessableContentStatus);
 					res.setResponse_desc("files not found !");
 					// throw Exception();
 					break;
 
 				default:
-					res.setResponse_code(400);
-					res.setResponse_desc(e.getMessage());
+					res.setResponse_code(UnprocessableContentStatus);
+					res.setResponse_desc("ไม่สามารถ Upload ได้");
 					break;
 			}
 

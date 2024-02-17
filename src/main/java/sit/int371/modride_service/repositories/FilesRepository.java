@@ -24,11 +24,18 @@ public interface FilesRepository {
                         " inner join licenses l on e.user_id = l.user_id ",
                         " where l.license_id = #{license_id} ",
         })
-        public List<LicensesBean> checkEvent(Integer license_id) throws Exception;
+        public List<LicensesBean> checkEventWithLicenseId(Integer license_id) throws Exception;
+
+        @Select({
+                        " select * from events e  ",
+                        " inner join vehicles v on v.vehicle_id = e.vehicle_id ",
+                        " where v.vehicle_id = #{vehicle_id} ",
+        })
+        public List<VehiclesBean> checkEventWithVehicleId(Integer vehicle_id) throws Exception;
 
         @Select({
                         " select l.user_id,l.license_id,l.license_fn,l.license_ln ",
-                        " ,lf.license_file_name,lf.license_download ",
+                        " ,lf.license_file_name,lf.license_download,lf.license_size ",
                         " ,ls.approval_status,ls.denied_detail,ls.timestamp ",
                         " from licenses l  ",
                         " inner join users u on l.user_id = u.user_id ",
@@ -86,8 +93,8 @@ public interface FilesRepository {
         public List<LicensesFilesBean> checkLicenseFiles(String id) throws Exception;
 
         @Insert({
-                        " insert into license_files(license_id,license_file_name,license_download) ",
-                        " values(#{id},#{file_name},#{download_url}) ",
+                        " insert into license_files(license_id,license_file_name,license_download,license_size) ",
+                        " values(#{id},#{file_name},#{download_url},#{size}) ",
         })
         public void insertLicensePicture(FilesDataBean filesDataBean) throws Exception;
 

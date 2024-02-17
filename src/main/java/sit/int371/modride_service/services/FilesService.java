@@ -5,23 +5,29 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Optional;
 import java.util.regex.Pattern;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import sit.int371.modride_service.beans.APIResponseBean;
 import sit.int371.modride_service.beans.ErrorsBean;
 import sit.int371.modride_service.beans.UsersBean;
+import sit.int371.modride_service.beans.driver_profile.LicensesBean;
+import sit.int371.modride_service.beans.driver_profile.VehiclesBean;
 import sit.int371.modride_service.beans.files_beans.FilesDataBean;
 import sit.int371.modride_service.controllers.BaseController;
 import sit.int371.modride_service.repositories.FilesRepository;
 
 @Service
 public class FilesService extends BaseController {
+
+    private static final long MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
 
     @Value("${uri_userfile_storage}")
     public String uriUserProfile;
@@ -45,6 +51,17 @@ public class FilesService extends BaseController {
                 return true;
             default:
                 return false;
+        }
+    }
+
+    public boolean isMoreThanMaxSize(MultipartFile file) throws Exception {
+        long fileSize = file.getSize();
+
+        // Check if the file size exceeds the limit
+        if (fileSize > MAX_FILE_SIZE) {
+            return true;
+        } else {
+            return false;
         }
     }
 
@@ -123,11 +140,16 @@ public class FilesService extends BaseController {
                 targetOriginPngFile.delete();
             }
 
+            System.out.println("uploadDir: "+ uploadDir);
+            System.out.println("target: "+ target);
+
             // การ upload file ลงไปยัง dir ที่ต้องการ
             if (uploadDir.mkdir()) {
+                System.out.println("uploadDir.mkdir()");
                 file.transferTo(target);
                 System.out.println("if : " + target);
             } else {
+                System.out.println("not uploadDir.mkdir()");
                 file.transferTo(target);
                 System.out.println("else : " + target);
             }
@@ -222,6 +244,37 @@ public class FilesService extends BaseController {
             System.out.println("Got an exception. {}" + e.getMessage());
             throw e;
         }
+    }
+
+    public boolean checkRelateWithEvent(String deleteType, Integer id)
+            throws Exception {
+        try {
+            switch (deleteType) {
+                case "license":
+                    List<LicensesBean> licensesBeans = filesRepository
+                            .checkEventWithLicenseId(id);
+                    if (licensesBeans.isEmpty()) {
+                        return true;
+                    } else {
+                        return false;
+                    }
+
+                case "vehicle":
+                    List<VehiclesBean> vehiclesBeans = filesRepository
+                            .checkEventWithVehicleId(id);
+                    if (vehiclesBeans.isEmpty()) {
+                        return true;
+                    } else {
+                        return false;
+                    }
+            }
+
+        } catch (Exception e) {
+            System.out.println("Got an exception. {}" + e.getMessage());
+            throw e;
+        }
+
+        return true;
     }
 
 }

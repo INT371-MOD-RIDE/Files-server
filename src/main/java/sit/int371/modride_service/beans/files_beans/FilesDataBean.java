@@ -8,4 +8,5 @@ public class FilesDataBean {
     private String file_name;
     private String uri_files_storage;
     private String download_url;
+    private String size;
 }

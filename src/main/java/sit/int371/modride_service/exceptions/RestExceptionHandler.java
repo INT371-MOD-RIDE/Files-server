@@ -10,9 +10,5 @@ import sit.int371.modride_service.models.UploadResponseMessage;
 
 @ControllerAdvice
 public class RestExceptionHandler extends ResponseEntityExceptionHandler {
-    @ExceptionHandler(MaxUploadSizeExceededException.class)
-    public ResponseEntity<UploadResponseMessage> handleMaxSizeException(MaxUploadSizeExceededException exc) {
-        return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED)
-                .body(new UploadResponseMessage("Unable to upload. File is too large!"));
-    }
+    
 }
