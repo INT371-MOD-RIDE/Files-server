@@ -107,10 +107,11 @@ public class FilesController extends BaseController {
             String[] nameSplit = file.getOriginalFilename().split(Pattern.quote("."));
             String nameExtension = nameSplit[nameSplit.length - 1];
             if (filesService.checkTypeFileUpload(nameExtension)) {
-                if (filesService.isMoreThanMaxSize(file)) {
+                int checkMoreThanMax = filesService.isMoreThanMaxSize(file, category);
+                if (checkMoreThanMax == 5 || checkMoreThanMax == 10) {
                     response.setStatus(UnprocessableContentStatus);
                     res.setResponse_code(UnprocessableContentStatus);
-                    res.setResponse_desc("ขนาดไฟล์ต้องไม่เกิน 10 MB");
+                    res.setResponse_desc("ขนาดไฟล์ต้องไม่เกิน " + checkMoreThanMax + " MB");
                     return res;
                 }
 

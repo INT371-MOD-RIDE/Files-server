@@ -28,6 +28,7 @@ import sit.int371.modride_service.repositories.FilesRepository;
 public class FilesService extends BaseController {
 
     private static final long MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
+    private static final long User_MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
 
     @Value("${uri_userfile_storage}")
     public String uriUserProfile;
@@ -54,14 +55,24 @@ public class FilesService extends BaseController {
         }
     }
 
-    public boolean isMoreThanMaxSize(MultipartFile file) throws Exception {
+    public Integer isMoreThanMaxSize(MultipartFile file, String category) throws Exception {
         long fileSize = file.getSize();
-
+        System.out.println("category: "+category);
         // Check if the file size exceeds the limit
-        if (fileSize > MAX_FILE_SIZE) {
-            return true;
-        } else {
-            return false;
+        switch (category) {
+            case "user":
+                if (fileSize > User_MAX_FILE_SIZE) {
+                    return 5;
+                } else {
+                    return 0;
+                }
+
+            default:
+                if (fileSize > MAX_FILE_SIZE) {
+                    return 10;
+                } else {
+                    return 0;
+                }
         }
     }
 
@@ -140,8 +151,8 @@ public class FilesService extends BaseController {
                 targetOriginPngFile.delete();
             }
 
-            System.out.println("uploadDir: "+ uploadDir);
-            System.out.println("target: "+ target);
+            System.out.println("uploadDir: " + uploadDir);
+            System.out.println("target: " + target);
 
             // การ upload file ลงไปยัง dir ที่ต้องการ
             if (uploadDir.mkdir()) {
