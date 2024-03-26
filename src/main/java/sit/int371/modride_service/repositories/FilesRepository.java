@@ -9,6 +9,7 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Update;
 
+import sit.int371.modride_service.beans.EventsBean;
 import sit.int371.modride_service.beans.UsersBean;
 import sit.int371.modride_service.beans.driver_profile.LicensesBean;
 import sit.int371.modride_service.beans.driver_profile.VehiclesBean;
@@ -32,6 +33,11 @@ public interface FilesRepository {
                         " where v.vehicle_id = #{vehicle_id} ",
         })
         public List<VehiclesBean> checkEventWithVehicleId(Integer vehicle_id) throws Exception;
+
+        @Select({
+                        " select * from events where status != 3 and user_id = #{user_id} "
+        })
+        public List<EventsBean> getEventNotClose(Integer user_id) throws Exception;
 
         @Select({
                         " select l.user_id,l.license_id,l.license_fn,l.license_ln ",

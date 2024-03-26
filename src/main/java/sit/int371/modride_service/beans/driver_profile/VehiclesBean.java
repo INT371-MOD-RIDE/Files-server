@@ -4,6 +4,7 @@ import lombok.Data;
 
 @Data
 public class VehiclesBean {
+    private Integer user_id;
     private Integer vehicle_id;
     private Integer license_id;
     private String brand;

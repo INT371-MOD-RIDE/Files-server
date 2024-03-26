@@ -17,6 +17,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import sit.int371.modride_service.beans.APIResponseBean;
 import sit.int371.modride_service.beans.ErrorsBean;
+import sit.int371.modride_service.beans.EventsBean;
 import sit.int371.modride_service.beans.UsersBean;
 import sit.int371.modride_service.beans.driver_profile.LicensesBean;
 import sit.int371.modride_service.beans.driver_profile.VehiclesBean;
@@ -57,7 +58,7 @@ public class FilesService extends BaseController {
 
     public Integer isMoreThanMaxSize(MultipartFile file, String category) throws Exception {
         long fileSize = file.getSize();
-        System.out.println("category: "+category);
+        System.out.println("category: " + category);
         // Check if the file size exceeds the limit
         switch (category) {
             case "user":
@@ -257,35 +258,21 @@ public class FilesService extends BaseController {
         }
     }
 
-    public boolean checkRelateWithEvent(String deleteType, Integer id)
+    public boolean checkAllEventClose(Integer user_id)
             throws Exception {
         try {
-            switch (deleteType) {
-                case "license":
-                    List<LicensesBean> licensesBeans = filesRepository
-                            .checkEventWithLicenseId(id);
-                    if (licensesBeans.isEmpty()) {
-                        return true;
-                    } else {
-                        return false;
-                    }
-
-                case "vehicle":
-                    List<VehiclesBean> vehiclesBeans = filesRepository
-                            .checkEventWithVehicleId(id);
-                    if (vehiclesBeans.isEmpty()) {
-                        return true;
-                    } else {
-                        return false;
-                    }
+            List<EventsBean> licensesBeans = filesRepository
+                    .getEventNotClose(user_id);
+            if (licensesBeans.isEmpty()) {
+                return true;
+            } else {
+                return false;
             }
-
         } catch (Exception e) {
             System.out.println("Got an exception. {}" + e.getMessage());
             throw e;
         }
 
-        return true;
     }
 
 }

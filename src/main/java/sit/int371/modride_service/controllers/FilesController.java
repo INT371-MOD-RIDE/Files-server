@@ -210,7 +210,7 @@ public class FilesController extends BaseController {
             @RequestBody VehiclesBean bean) {
         APIResponseBean res = new APIResponseBean();
         try {
-            if (filesService.checkRelateWithEvent("vehicle", bean.getVehicle_id())) {
+            if (filesService.checkAllEventClose(bean.getUser_id())) {
                 filesRepository.deleteVehicleFile(bean);
                 filesService.deleteFiles(bean.getVehicle_file_name(), bean.getCategory());
                 filesRepository.deleteVehicle(bean);
@@ -233,7 +233,7 @@ public class FilesController extends BaseController {
             @RequestBody DriverProfileBean bean) {
         APIResponseBean res = new APIResponseBean();
         try {
-            if (filesService.checkRelateWithEvent("license", bean.getLicenseDetail().getLicense_id())) {
+            if (filesService.checkAllEventClose(bean.getLicenseDetail().getUser_id())) {
                 // loop for delete all vehicles relate to their license
                 for (VehiclesBean vehiclesBean : bean.getVehicleList()) {
                     filesRepository.deleteVehicleFile(vehiclesBean);
